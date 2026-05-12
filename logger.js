@@ -24,3 +24,24 @@ class Logger {
     }
   }
 }
+function withLog(fn, logger) {
+  return async function (...args) {
+    const name  = fn.name || 'anonymous';
+    const start = Date.now();
+ 
+    logger.log('DEBUG', name, `args: ${JSON.stringify(args)}`);
+ 
+    try {
+      const result = await Promise.resolve(fn(...args));
+      const ms = Date.now() - start;
+ 
+      logger.log('INFO', name, `result: ${JSON.stringify(result)} (${ms}ms)`);
+      return result;
+ 
+    } catch (err) {
+      const ms = Date.now() - start;
+      logger.log('ERROR', name, `threw: ${err.message} (${ms}ms)`);
+      throw err;
+    }
+  };
+}
