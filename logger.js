@@ -45,3 +45,37 @@ function withLog(fn, logger) {
     }
   };
 }
+const add    = (a, b) => a + b;
+const divide = (a, b) => { if (b === 0) throw new Error('Division by zero'); return a / b; };
+const delay  = ms => new Promise(r => setTimeout(r, ms));
+const fetchUser = async id => { await delay(50); return { id, name: 'Аня' }; };
+ 
+const infoLogger  = new Logger({ level: 'INFO' });
+const errorLogger = new Logger({ level: 'ERROR', formatter: 'json' });
+const logs = [];
+const debugLogger = new Logger({ level: 'DEBUG', transport: msg => logs.push(msg) });
+ 
+const loggedAdd = withLog(add, infoLogger);
+const loggedDivide = withLog(divide, errorLogger);
+const loggedFetch = withLog(fetchUser, infoLogger);
+const loggedAddDebug = withLog(add, debugLogger);
+ 
+async function main() {
+  console.log('INFO: add');
+  await loggedAdd(3, 4);
+ 
+  console.log('\nERROR-only: divide (success — не логується)');
+  await loggedDivide(10, 2);
+ 
+  console.log('\n ERROR-only: divide (помилка — логується)');
+  try { await loggedDivide(10, 0); } catch (_) {}
+ 
+  console.log('\nINFO: async fetchUser');
+  await loggedFetch(42);
+ 
+  console.log('\n DEBUG: custom transport ');
+  await loggedAddDebug(1, 2);
+  console.log('Captured logs:', logs);
+}
+ 
+main();
